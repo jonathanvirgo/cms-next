@@ -1,0 +1,106 @@
+import { z } from 'zod'
+import { FormConfig } from './types'
+
+export const postFormConfig: FormConfig = {
+    modelName: 'Post',
+    title: 'Post Management',
+    description: 'Manage blog posts and articles',
+    fields: [
+        {
+            name: 'title',
+            label: 'Post Title',
+            type: 'text',
+            required: true,
+            placeholder: 'Enter post title',
+        },
+        {
+            name: 'slug',
+            label: 'URL Slug',
+            type: 'text',
+            required: true,
+            placeholder: 'my-post-title',
+            description: 'URL-friendly version of title',
+        },
+        {
+            name: 'excerpt',
+            label: 'Excerpt',
+            type: 'textarea',
+            required: false,
+            placeholder: 'Short summary of the post...',
+            rows: 2,
+        },
+        {
+            name: 'content',
+            label: 'Content',
+            type: 'textarea',
+            required: true,
+            placeholder: 'Write your post content here...',
+            rows: 10,
+        },
+        {
+            name: 'thumbnail',
+            label: 'Thumbnail URL',
+            type: 'text',
+            required: false,
+            placeholder: 'https://example.com/image.jpg',
+        },
+        {
+            name: 'status',
+            label: 'Status',
+            type: 'select',
+            required: true,
+            defaultValue: 'draft',
+            options: [
+                { value: 'draft', label: 'Draft' },
+                { value: 'published', label: 'Published' },
+            ],
+        },
+        {
+            name: 'authorId',
+            label: 'Author',
+            type: 'relation',
+            required: true,
+            relation: {
+                model: 'User',
+                displayField: 'name',
+                valueField: 'id',
+                dataKey: 'authors',
+            },
+        },
+        {
+            name: 'categoryId',
+            label: 'Category',
+            type: 'relation',
+            required: true,
+            relation: {
+                model: 'Category',
+                displayField: 'name',
+                valueField: 'id',
+                dataKey: 'categories',
+            },
+        },
+        {
+            name: 'tagIds',
+            label: 'Tags',
+            type: 'multi-relation',
+            required: false,
+            relation: {
+                model: 'Tag',
+                displayField: 'name',
+                valueField: 'id',
+                dataKey: 'tags',
+            },
+        },
+    ],
+    validation: z.object({
+        title: z.string().min(1, 'Title is required'),
+        slug: z.string().min(1, 'Slug is required'),
+        content: z.string().min(1, 'Content is required'),
+        excerpt: z.string().optional(),
+        thumbnail: z.string().optional(),
+        status: z.enum(['draft', 'published']),
+        authorId: z.string().min(1, 'Author is required'),
+        categoryId: z.string().min(1, 'Category is required'),
+        tagIds: z.array(z.string()).optional(),
+    }),
+}
