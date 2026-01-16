@@ -2,6 +2,12 @@ import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
+import bcrypt from 'bcrypt'
+
+// Password hashing helper
+async function hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, 12)
+}
 
 // Prisma v7 requires driver adapter for PostgreSQL
 // Use DIRECT_URL for seeding (bypasses connection pooler)
@@ -130,33 +136,37 @@ async function main() {
 
     console.log('✅ Tags created:', [reactTag.name, nextjsTag.name, typescriptTag.name, prismaTag.name, tailwindTag.name])
 
-    // Create Admin User
+    // Hash passwords for users
+    const adminPassword = await hashPassword('admin123')
+    const editorPassword = await hashPassword('editor123')
+
+    // Create Admin User (with hashed password)
     const adminUser = await prisma.user.upsert({
         where: { email: 'admin@example.com' },
-        update: {},
+        update: { password: adminPassword }, // Update existing user with hashed password
         create: {
             name: 'Admin User',
             email: 'admin@example.com',
-            password: 'admin123', // In production, use hashed passwords!
+            password: adminPassword,
             roleId: adminRole.id,
             isActive: true,
         },
     })
 
-    // Create Editor User  
+    // Create Editor User (with hashed password)
     const editorUser = await prisma.user.upsert({
         where: { email: 'editor@example.com' },
-        update: {},
+        update: { password: editorPassword }, // Update existing user with hashed password
         create: {
             name: 'Editor User',
             email: 'editor@example.com',
-            password: 'editor123',
+            password: editorPassword,
             roleId: editorRole.id,
             isActive: true,
         },
     })
 
-    console.log('✅ Users created:', [adminUser.email, editorUser.email])
+    console.log('✅ Users created/updated with hashed passwords:', [adminUser.email, editorUser.email])
 
     // Create Sample Posts
     const post1 = await prisma.post.upsert({

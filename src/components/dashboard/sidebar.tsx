@@ -15,6 +15,7 @@ import {
     Tag,
     FolderOpen,
     Shield,
+    Smartphone,
     type LucideIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -40,6 +41,7 @@ const contentItems: NavItem[] = [
 const managementItems: NavItem[] = [
     { icon: Users, label: "Users", href: "/users" },
     { icon: Shield, label: "Roles", href: "/roles" },
+    { icon: Smartphone, label: "Devices", href: "/devices" },
 ];
 
 export function DashboardSidebar() {

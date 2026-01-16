@@ -36,10 +36,13 @@ import {
     SelectFieldConfig,
     TextareaFieldConfig,
     DateFieldConfig,
+    FileFieldConfig,
+    RichTextFieldConfig,
 } from '@/lib/form-configs'
-import { Loader2, CalendarIcon } from 'lucide-react'
+import { Loader2, CalendarIcon, Upload, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
+import { useRef, useState } from 'react'
 
 interface DynamicFormProps {
     config: FormConfig
@@ -349,6 +352,118 @@ export function DynamicForm({
                                 </div>
                                 {dateField.description && (
                                     <FormDescription>{dateField.description}</FormDescription>
+                                )}
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )
+
+            case 'file':
+                const fileField = field as FileFieldConfig
+                return (
+                    <FormField
+                        key={field.name}
+                        control={form.control}
+                        name={field.name}
+                        render={({ field: formField }) => (
+                            <FormItem className={field.className}>
+                                <FormLabel>
+                                    {field.label}
+                                    {field.required && <span className="text-destructive ml-1">*</span>}
+                                </FormLabel>
+                                <FormControl>
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <label
+                                                htmlFor={`file-${field.name}`}
+                                                className={cn(
+                                                    "flex items-center gap-2 px-4 py-2 border rounded-md cursor-pointer",
+                                                    "hover:bg-muted transition-colors",
+                                                    "text-sm font-medium"
+                                                )}
+                                            >
+                                                <Upload className="h-4 w-4" />
+                                                {fileField.multiple ? 'Choose files' : 'Choose file'}
+                                            </label>
+                                            <input
+                                                id={`file-${field.name}`}
+                                                type="file"
+                                                accept={fileField.accept}
+                                                multiple={fileField.multiple}
+                                                className="hidden"
+                                                disabled={field.disabled || isLoading}
+                                                onChange={(e) => {
+                                                    const files = e.target.files
+                                                    if (files) {
+                                                        if (fileField.multiple) {
+                                                            formField.onChange(Array.from(files))
+                                                        } else {
+                                                            formField.onChange(files[0] || null)
+                                                        }
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                        {formField.value && (
+                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                <span>
+                                                    {Array.isArray(formField.value)
+                                                        ? `${(formField.value as File[]).length} file(s) selected`
+                                                        : (formField.value as File).name
+                                                    }
+                                                </span>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => formField.onChange(null)}
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </FormControl>
+                                {field.description && (
+                                    <FormDescription>{field.description}</FormDescription>
+                                )}
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )
+
+            case 'rich-text':
+                const richTextField = field as RichTextFieldConfig
+                return (
+                    <FormField
+                        key={field.name}
+                        control={form.control}
+                        name={field.name}
+                        render={({ field: formField }) => (
+                            <FormItem className={field.className}>
+                                <FormLabel>
+                                    {field.label}
+                                    {field.required && <span className="text-destructive ml-1">*</span>}
+                                </FormLabel>
+                                <FormControl>
+                                    <Textarea
+                                        placeholder={field.placeholder || 'Enter rich text content...'}
+                                        disabled={field.disabled || isLoading}
+                                        {...formField}
+                                        value={formField.value as string || ''}
+                                        style={{ minHeight: richTextField.minHeight || 200 }}
+                                        className="font-mono"
+                                    />
+                                </FormControl>
+                                {field.description && (
+                                    <FormDescription>
+                                        {field.description}
+                                        <span className="text-xs text-muted-foreground ml-1">
+                                            (Markdown supported)
+                                        </span>
+                                    </FormDescription>
                                 )}
                                 <FormMessage />
                             </FormItem>

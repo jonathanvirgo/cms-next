@@ -14,16 +14,18 @@ datasource db {
 // ============================================
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  isActive  Boolean  @default(true)
-  roleId    String
-  role      Role     @relation(fields: [roleId], references: [id])
-  posts     Post[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String               @id @default(cuid())
+  email           String               @unique
+  name            String
+  password        String
+  isActive        Boolean              @default(true)
+  roleId          String
+  role            Role                 @relation(fields: [roleId], references: [id])
+  posts           Post[]
+  sessions        UserSession[]
+  sessionSettings UserSessionSettings?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
   @@index([roleId])
   @@index([email])
@@ -102,4 +104,44 @@ model FormConfig {
   config    String   // Form metadata as JSON string
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// AUTH & SESSION MODELS
+// ============================================
+
+model UserSession {
+  id               String    @id @default(cuid())
+  userId           String
+  jwtTokenId       String
+  deviceName       String?
+  deviceType       String    @default("unknown") // desktop, mobile, tablet, unknown
+  browser          String?
+  os               String?
+  deviceInfo       String?
+  ipAddress        String?
+  userAgent        String?
+  location         String?
+  loginAt          DateTime  @default(now())
+  lastActivity     DateTime  @default(now()) @updatedAt
+  logoutAt         DateTime?
+  isActive         Boolean   @default(true)
+  isCurrentSession Boolean   @default(false)
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, jwtTokenId])
+  @@index([lastActivity])
+}
+
+model UserSessionSettings {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  maxSessions          Int      @default(5)
+  sessionTimeoutHours  Int      @default(24)
+  allowMultipleDevices Boolean  @default(true)
+  notifyNewLogin       Boolean  @default(true)
+  autoLogoutInactive   Boolean  @default(true)
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 }

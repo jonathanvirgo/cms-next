@@ -78,8 +78,14 @@ export interface DateFieldConfig extends BaseFieldConfig {
 
 export interface FileFieldConfig extends BaseFieldConfig {
     type: 'file'
-    accept?: string
-    maxSize?: number
+    accept?: string       // e.g. 'image/*', '.pdf,.doc'
+    maxSize?: number      // in bytes
+    multiple?: boolean    // allow multiple files
+}
+
+export interface RichTextFieldConfig extends BaseFieldConfig {
+    type: 'rich-text'
+    minHeight?: number    // editor min height in px
 }
 
 export type FieldConfig =
@@ -91,6 +97,7 @@ export type FieldConfig =
     | MultiRelationFieldConfig
     | DateFieldConfig
     | FileFieldConfig
+    | RichTextFieldConfig
     | BaseFieldConfig
 
 export interface FormConfig {

@@ -1,5 +1,6 @@
-import { router, publicProcedure } from '../server'
+import { router, publicProcedure, protectedProcedure } from '../server'
 import { z } from 'zod'
+import { hashPassword } from '@/lib/auth'
 
 export const userRouter = router({
     // Lấy data cho form (roles để chọn)
@@ -12,7 +13,7 @@ export const userRouter = router({
         return { roles }
     }),
 
-    list: publicProcedure.query(async ({ ctx }) => {
+    list: protectedProcedure.query(async ({ ctx }) => {
         return await ctx.db.user.findMany({
             include: {
                 role: {
@@ -26,7 +27,7 @@ export const userRouter = router({
         })
     }),
 
-    getById: publicProcedure
+    getById: protectedProcedure
         .input(z.object({ id: z.string() }))
         .query(async ({ ctx, input }) => {
             return await ctx.db.user.findUnique({
@@ -35,7 +36,7 @@ export const userRouter = router({
             })
         }),
 
-    create: publicProcedure
+    create: protectedProcedure
         .input(z.object({
             email: z.string().email(),
             name: z.string().min(1),
@@ -44,13 +45,19 @@ export const userRouter = router({
             isActive: z.boolean().default(true),
         }))
         .mutation(async ({ ctx, input }) => {
+            // Hash password trước khi lưu
+            const hashedPassword = await hashPassword(input.password)
+
             return await ctx.db.user.create({
-                data: input,
+                data: {
+                    ...input,
+                    password: hashedPassword,
+                },
                 include: { role: true }
             })
         }),
 
-    update: publicProcedure
+    update: protectedProcedure
         .input(z.object({
             id: z.string(),
             email: z.string().email().optional(),
@@ -60,11 +67,18 @@ export const userRouter = router({
             isActive: z.boolean().optional(),
         }))
         .mutation(async ({ ctx, input }) => {
-            const { id, ...data } = input
+            const { id, password, ...rest } = input
+
             // Remove undefined values
-            const cleanData = Object.fromEntries(
-                Object.entries(data).filter(([, v]) => v !== undefined)
+            const cleanData: Record<string, unknown> = Object.fromEntries(
+                Object.entries(rest).filter(([, v]) => v !== undefined)
             )
+
+            // Hash password nếu được cung cấp
+            if (password) {
+                cleanData.password = await hashPassword(password)
+            }
+
             return await ctx.db.user.update({
                 where: { id },
                 data: cleanData,
@@ -72,7 +86,7 @@ export const userRouter = router({
             })
         }),
 
-    delete: publicProcedure
+    delete: protectedProcedure
         .input(z.object({ id: z.string() }))
         .mutation(async ({ ctx, input }) => {
             return await ctx.db.user.delete({
